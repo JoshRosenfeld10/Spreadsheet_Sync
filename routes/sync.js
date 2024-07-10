@@ -44,8 +44,7 @@ router.get("/", async (req, res) => {
       return;
     }
   } catch (error) {
-    console.error(error);
-    res.sendStatus(400);
+    res.sendStatus(404);
     return;
   }
 
