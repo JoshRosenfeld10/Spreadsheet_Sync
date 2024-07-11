@@ -52,6 +52,13 @@ router.get("/", async (req, res) => {
   }
 */
 router.post("/", async (req, res) => {
+  if (req.body.challenge) {
+    res.status(200).send({
+      smartsheetHookResponse: req.body.challenge,
+    });
+    return;
+  }
+
   const { rowId: rowIdUI } = req.body.events[0];
 
   try {
