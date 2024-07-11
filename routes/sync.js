@@ -59,10 +59,23 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const { rowId: rowIdUI } = req.body.events[0];
+  const { rowId: rowIdUI, eventType } = req.body.events[0];
+
+  // If the webhook event is not an update event
+  if (eventType !== "updated") {
+    res.sendStatus(200);
+    return;
+  }
 
   try {
     const { cells } = await smartsheet.getRow(smartsheetUI.sheetId, rowIdUI);
+
+    const syncFlag = cells[smartsheetUI.syncFlagIndex].displayValue;
+
+    if (syncFlag === "false") {
+      res.sendStatus(200);
+      return;
+    }
 
     const syncDirection =
         cells[smartsheetUI.syncDirectionIndex].displayValue ===
@@ -85,6 +98,24 @@ router.post("/", async (req, res) => {
       res.sendStatus(syncResponse.code);
       return;
     } else if (syncResponse.send === "string") {
+      await smartsheet.updateRows({
+        sheetId: smartsheetUI.sheetId,
+        rows: [
+          {
+            id: rowIdUI,
+            cells: cells
+              .filter((cell) => cell.value && !cell.formula)
+              .map((cell) =>
+                cell.columnId === smartsheetUI.syncFlagColumnId
+                  ? {
+                      columnId: cell.columnId,
+                      value: "false",
+                    }
+                  : cell
+              ),
+          },
+        ],
+      });
       res.set("Content-Type", "text/html");
       res.send(syncResponse.message);
       return;
