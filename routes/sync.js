@@ -65,78 +65,80 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  console.log(req.body);
-  const { rowId: rowIdUI, eventType } = req.body.events[0];
-  res.sendStatus(200);
+  if (
+    req.body.events[0].objectType !== "cell" ||
+    !req.body.events[0].rowId ||
+    req.body.events[0].eventType !== "updated"
+  ) {
+    res.sendStatus(200);
+    return;
+  }
 
-  // // If the webhook event is not an update event
-  // if (eventType !== "updated") {
-  //   res.sendStatus(200);
-  //   return;
-  // }
+  const { rowId: rowIdUI } = req.body.events[0];
 
-  // try {
-  //   const { cells } = await smartsheet.getRow(smartsheetUI.sheetId, rowIdUI);
+  try {
+    const { cells } = await smartsheet.getRow(smartsheetUI.sheetId, rowIdUI);
 
-  //   const syncFlag = cells[smartsheetUI.syncFlagIndex].displayValue;
+    const syncFlag = cells[smartsheetUI.syncFlagIndex].displayValue;
 
-  //   if (syncFlag === "false") {
-  //     res.sendStatus(200);
-  //     return;
-  //   }
+    if (syncFlag === "false") {
+      res.sendStatus(200);
+      return;
+    }
 
-  //   const syncDirectionConversion = {
-  //     "From Google Sheet to Smartsheet": "G2S",
-  //     "From Smartsheet to Google Sheet": "S2G",
-  //     "From Report to Sheet (Smartsheet)": "R2S",
-  //   };
+    const syncDirectionConversion = {
+      "From Google Sheet to Smartsheet": "G2S",
+      "From Smartsheet to Google Sheet": "S2G",
+      "From Report to Sheet (Smartsheet)": "R2S",
+    };
 
-  //   const syncDirection =
-  //       syncDirectionConversion[
-  //         cells[smartsheetUI.syncDirectionIndex].displayValue
-  //       ],
-  //     googleSheetId = cells[smartsheetUI.googleSheetIdIndex].displayValue,
-  //     smartsheetSheetId =
-  //       cells[smartsheetUI.smartsheetSheetIdIndex].displayValue,
-  //     googleSheetName = cells[smartsheetUI.googleSheetNameIndex].displayValue;
+    const syncDirection =
+        syncDirectionConversion[
+          cells[smartsheetUI.syncDirectionIndex].displayValue
+        ],
+      googleSheetId = cells[smartsheetUI.googleSheetIdIndex].displayValue,
+      smartsheetSheetId =
+        cells[smartsheetUI.smartsheetSheetIdIndex].displayValue,
+      googleSheetName = cells[smartsheetUI.googleSheetNameIndex].displayValue;
 
-  //   const syncResponse = await sync({
-  //     syncDirection,
-  //     googleSheetId,
-  //     smartsheetSheetId,
-  //     googleSheetName,
-  //   });
+    const syncResponse = await sync({
+      syncDirection,
+      googleSheetId,
+      smartsheetSheetId,
+      googleSheetName,
+    });
 
-  //   if (syncResponse.send === "code") {
-  //     res.sendStatus(syncResponse.code);
-  //     return;
-  //   } else if (syncResponse.send === "string") {
-  //     await smartsheet.updateRows({
-  //       sheetId: smartsheetUI.sheetId,
-  //       rows: [
-  //         {
-  //           id: rowIdUI,
-  //           cells: cells
-  //             .filter((cell) => cell.value && !cell.formula)
-  //             .map((cell) =>
-  //               cell.columnId === smartsheetUI.syncFlagColumnId
-  //                 ? {
-  //                     columnId: cell.columnId,
-  //                     value: "false",
-  //                   }
-  //                 : cell
-  //             ),
-  //         },
-  //       ],
-  //     });
-  //     res.set("Content-Type", "text/html");
-  //     res.send(syncResponse.message);
-  //     return;
-  //   }
-  // } catch (error) {
-  //   res.sendStatus(400);
-  //   return;
-  // }
+    if (syncResponse.send === "code") {
+      res.sendStatus(syncResponse.code);
+      return;
+    } else if (syncResponse.send === "string") {
+      await smartsheet.updateRows({
+        sheetId: smartsheetUI.sheetId,
+        rows: [
+          {
+            id: rowIdUI,
+            cells: cells
+              .filter((cell) => cell.value && !cell.formula)
+              .map((cell) =>
+                cell.columnId === smartsheetUI.syncFlagColumnId
+                  ? {
+                      columnId: cell.columnId,
+                      value: "false",
+                    }
+                  : cell
+              ),
+          },
+        ],
+      });
+      res.set("Content-Type", "text/html");
+      res.send(syncResponse.message);
+      return;
+    }
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(400);
+    return;
+  }
 });
 
 module.exports = router;
