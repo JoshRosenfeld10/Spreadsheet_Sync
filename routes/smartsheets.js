@@ -37,6 +37,11 @@ router.post("/webhook", async (req, res) => {
   res.send(data);
 });
 
+router.get("/webhook", async (req, res) => {
+  const data = await smartsheet.getWebhooks();
+  res.send(data);
+});
+
 /**
  * Example Request Body
  * {
