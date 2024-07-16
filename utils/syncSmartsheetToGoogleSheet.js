@@ -28,7 +28,7 @@ const syncSmartsheetToGoogleSheet = async ({
   const smartsheetRowValues = smartsheetRows.map((row) =>
     row.cells
       .filter((cell) => !smartsheetHiddenColumnIds.includes(cell.columnId))
-      .map((cell) => cell.displayValue || "")
+      .map((cell) => cell.displayValue || cell.value || "")
   );
 
   // Filter blank spaces off the end of each row

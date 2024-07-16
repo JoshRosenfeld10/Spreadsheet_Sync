@@ -8,7 +8,8 @@ const isolatePrimaryColumn = async (smartsheetColumns, sheetId) => {
 
   if (
     smartsheetColumns[primaryColumnIndex].index !== 0 ||
-    smartsheetColumns[primaryColumnIndex].title !== "Primary Column (IGNORE)"
+    smartsheetColumns[primaryColumnIndex].title !== "Primary Column (IGNORE)" ||
+    !smartsheetColumns[primaryColumnIndex].hidden
   ) {
     await smartsheet.updateColumn({
       sheetId,

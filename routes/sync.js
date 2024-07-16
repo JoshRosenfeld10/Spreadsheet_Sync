@@ -9,14 +9,20 @@ const express = require("express"),
 router.use(express.json());
 
 router.get("/", async (req, res) => {
-  const { syncDirection, googleSheetId, smartsheetSheetId, googleSheetName } =
-    req.query;
+  const {
+    syncDirection,
+    googleSheetId,
+    smartsheetSheetId,
+    googleSheetName,
+    smartsheetReportId,
+  } = req.query;
 
   const syncResponse = await sync({
     syncDirection,
     googleSheetId,
     smartsheetSheetId,
     googleSheetName,
+    smartsheetReportId,
   });
 
   if (syncResponse.send === "code") {
@@ -77,11 +83,16 @@ router.post("/", async (req, res) => {
       return;
     }
 
+    const syncDirectionConversion = {
+      "From Google Sheet to Smartsheet": "G2S",
+      "From Smartsheet to Google Sheet": "S2G",
+      "From Report to Sheet (Smartsheet)": "R2S",
+    };
+
     const syncDirection =
-        cells[smartsheetUI.syncDirectionIndex].displayValue ===
-        "From Google Sheet to Smartsheet"
-          ? "G2S"
-          : "S2G",
+        syncDirectionConversion[
+          cells[smartsheetUI.syncDirectionIndex].displayValue
+        ],
       googleSheetId = cells[smartsheetUI.googleSheetIdIndex].displayValue,
       smartsheetSheetId =
         cells[smartsheetUI.smartsheetSheetIdIndex].displayValue,

@@ -3,7 +3,8 @@ module.exports = {
   smartsheetSheetIdIndex: 1,
   googleSheetIdIndex: 2,
   googleSheetNameIndex: 3,
-  syncDirectionIndex: 4,
-  syncFlagIndex: 7,
+  smartsheetReportIdIndex: 4,
+  syncDirectionIndex: 5,
+  syncFlagIndex: 8,
   syncFlagColumnId: 416513908756356,
 };

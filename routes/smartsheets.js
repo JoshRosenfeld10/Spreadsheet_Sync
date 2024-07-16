@@ -53,4 +53,10 @@ router.get("/webhook/:id", async (req, res) => {
   res.send(data);
 });
 
+router.get("/report/:id", async (req, res) => {
+  // const data = await smartsheet.getReport(req.params.id);
+  const data = await smartsheet.getReport(req.params.id);
+  res.send(data);
+});
+
 module.exports = router;

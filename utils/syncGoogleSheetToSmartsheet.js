@@ -1,6 +1,7 @@
 const smartsheet = require("../modules/smartsheet"),
   google = require("../modules/google"),
   isolatePrimaryColumn = require("../utils/isolatePrimaryColumn"),
+  shiftN = require("./shiftN"),
   arrayMove = require("../utils/arrayMove");
 
 const syncGoogleSheetToSmartsheet = async ({
@@ -22,7 +23,7 @@ const syncGoogleSheetToSmartsheet = async ({
   );
 
   const smartsheetColumnTitles = smartsheetColumns
-    .filter((column) => !column.primary)
+    .filter((column) => !column.primary && !column.hidden)
     .map((column) => column.title);
 
   const googleSheetColumns = googleSheetRows.shift().map((title) => {
@@ -53,7 +54,7 @@ const syncGoogleSheetToSmartsheet = async ({
           });
 
           arrayMove(smartsheetColumns, swapIndex, index + 1);
-          arrayMove(smartsheetColumnTitles, swapIndex, index);
+          arrayMove(smartsheetColumnTitles, swapIndex - 1, index);
         } else {
           // If column does not exist in Smartsheet, create a new one
           await smartsheet.addColumn({
@@ -63,6 +64,7 @@ const syncGoogleSheetToSmartsheet = async ({
           });
 
           smartsheetColumns.splice(index + 1, 0, googleColumnTitle);
+          smartsheetColumnTitles.splice(index, 0, googleColumnTitle);
         }
       }
     }
@@ -85,11 +87,16 @@ const syncGoogleSheetToSmartsheet = async ({
     .map((column) => column.id);
   const smartsheetRowValues = smartsheetRows.map((row) =>
     row.cells
-      .filter(
-        (cell, idx) => (row.cells[idx + 1] || cell.displayValue) && idx !== 0
-      )
+      .filter((cell, idx) => idx !== 0)
       .map((cell) => cell.displayValue || "")
   );
+
+  smartsheetRowValues.forEach((row) => {
+    while (row[row.length - 1] === "") {
+      row.pop();
+    }
+    return row;
+  });
 
   let newRows = [],
     updateRows = [],
@@ -130,24 +137,57 @@ const syncGoogleSheetToSmartsheet = async ({
   }
 
   if (newRows.length) {
-    await smartsheet.addRows({
-      sheetId: smartsheetSheetId,
-      rows: newRows,
-    });
+    while (newRows.length > 500) {
+      const groupOfRows = shiftN(newRows, 500);
+
+      await smartsheet.addRows({
+        sheetId: smartsheetSheetId,
+        rows: groupOfRows,
+      });
+    }
+
+    if (newRows.length) {
+      await smartsheet.addRows({
+        sheetId: smartsheetSheetId,
+        rows: newRows,
+      });
+    }
   }
 
   if (updateRows.length) {
-    await smartsheet.updateRows({
-      sheetId: smartsheetSheetId,
-      rows: updateRows,
-    });
+    while (updateRows.length > 500) {
+      const groupOfRows = shiftN(updateRows, 500);
+
+      await smartsheet.updateRows({
+        sheetId: smartsheetSheetId,
+        rows: groupOfRows,
+      });
+    }
+
+    if (updateRows.length) {
+      await smartsheet.updateRows({
+        sheetId: smartsheetSheetId,
+        rows: updateRows,
+      });
+    }
   }
 
   if (deleteRowIds.length) {
-    await smartsheet.deleteRows({
-      sheetId: smartsheetSheetId,
-      rowIds: deleteRowIds.toString(),
-    });
+    while (deleteRowIds.length > 150) {
+      const groupOfRows = shiftN(deleteRowIds, 150);
+
+      await smartsheet.deleteRows({
+        sheetId: smartsheetSheetId,
+        rowIds: groupOfRows.toString(),
+      });
+    }
+
+    if (deleteRowIds.length) {
+      await smartsheet.deleteRows({
+        sheetId: smartsheetSheetId,
+        rowIds: deleteRowIds.toString(),
+      });
+    }
   }
 };
 

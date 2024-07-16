@@ -1,17 +1,19 @@
 const syncSmartsheetToGoogleSheet = require("../utils/syncSmartsheetToGoogleSheet"),
-  syncGoogleSheetToSmartsheet = require("../utils/syncGoogleSheetToSmartsheet");
+  syncGoogleSheetToSmartsheet = require("../utils/syncGoogleSheetToSmartsheet"),
+  syncReportToSheet = require("./syncReportToSheet");
 
 const sync = async ({
   syncDirection,
   googleSheetId,
   smartsheetSheetId,
   googleSheetName,
+  smartsheetReportId,
 }) => {
   if (
     !syncDirection ||
-    !googleSheetId ||
-    !smartsheetSheetId ||
-    !googleSheetName
+    ((syncDirection === "G2S" || syncDirection === "S2G") &&
+      (!googleSheetId || !smartsheetSheetId || !googleSheetName)) ||
+    (syncDirection === "R2S" && (!smartsheetSheetId || !smartsheetReportId))
   ) {
     return {
       send: "code",
@@ -38,6 +40,14 @@ const sync = async ({
         smartsheetSheetId,
         googleSheetName,
       });
+    } else if (syncDirection === "R2S") {
+      console.log(
+        `Syncing Smartsheet Report ${smartsheetReportId} to Smartsheet Sheet ${smartsheetSheetId}`
+      );
+      await syncReportToSheet({
+        smartsheetSheetId,
+        smartsheetReportId,
+      });
     } else {
       console.error("Invalid sync direction.");
       return {
@@ -57,7 +67,9 @@ const sync = async ({
     message: JSON.stringify(
       syncDirection === "S2G"
         ? `Smartsheet ${smartsheetSheetId} successfully synced to Google Sheet ${googleSheetId} (${googleSheetName}).`
-        : `Google Sheet ${googleSheetId} (${googleSheetName}) successfully synced to Smartsheet ${smartsheetSheetId}.`
+        : syncDirection === "G2S"
+        ? `Google Sheet ${googleSheetId} (${googleSheetName}) successfully synced to Smartsheet ${smartsheetSheetId}.`
+        : `Report ${smartsheetReportId} successfully synced to sheet ${smartsheetSheetId}.`
     ),
   };
 };

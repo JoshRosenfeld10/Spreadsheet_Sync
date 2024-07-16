@@ -19,6 +19,9 @@ const smartsheet = () => {
     getSheet: async (id) => {
       return await createClient().sheets.getSheet({
         id,
+        queryParameters: {
+          pageSize: 10000,
+        },
       });
     },
     getWebhooks: async () => {
@@ -87,6 +90,8 @@ const smartsheet = () => {
       });
     },
     /**
+     * 500 row limit
+     *
      * rows = [
      *    {
      *      toBottom: true,
@@ -106,6 +111,8 @@ const smartsheet = () => {
       });
     },
     /**
+     * 500 row limit
+     *
      * rows = [
      *    {
      *      id: ...,
@@ -128,6 +135,21 @@ const smartsheet = () => {
       return await createClient().sheets.deleteRow({
         sheetId,
         rowId: rowIds, // array of rowIds
+        queryParameters: {
+          ignoreRowsNotFound: true,
+        },
+      });
+    },
+
+    /**
+     * The Smartsheet node.js SDK's listReports & getReport methods are swapped
+     */
+    getReport: async (id) => {
+      return await createClient().reports.listReports({
+        id,
+        queryParameters: {
+          pageSize: 10000,
+        },
       });
     },
   };
