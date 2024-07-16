@@ -99,13 +99,16 @@ router.post("/", async (req, res) => {
       googleSheetId = cells[smartsheetUI.googleSheetIdIndex].displayValue,
       smartsheetSheetId =
         cells[smartsheetUI.smartsheetSheetIdIndex].displayValue,
-      googleSheetName = cells[smartsheetUI.googleSheetNameIndex].displayValue;
+      googleSheetName = cells[smartsheetUI.googleSheetNameIndex].displayValue,
+      smartsheetReportId =
+        cells[smartsheetUI.smartsheetReportIdIndex].displayValue;
 
     const syncResponse = await sync({
       syncDirection,
       googleSheetId,
       smartsheetSheetId,
       googleSheetName,
+      smartsheetReportId,
     });
 
     if (syncResponse.send === "code") {
