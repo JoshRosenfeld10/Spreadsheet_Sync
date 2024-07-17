@@ -9,7 +9,7 @@ const express = require("express"),
 router.use(express.json());
 
 router.get("/", async (req, res) => {
-  const {
+  let {
     syncDirection,
     googleSheetId,
     smartsheetSheetId,
