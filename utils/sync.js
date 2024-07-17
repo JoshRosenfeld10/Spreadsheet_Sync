@@ -8,6 +8,7 @@ const sync = async ({
   smartsheetSheetId,
   googleSheetName,
   smartsheetReportId,
+  ignoreUnrelatedColumns,
 }) => {
   if (
     !syncDirection ||
@@ -39,6 +40,7 @@ const sync = async ({
         googleSheetId,
         smartsheetSheetId,
         googleSheetName,
+        ignoreUnrelatedColumns,
       });
     } else if (syncDirection === "R2S") {
       console.log(
@@ -47,6 +49,7 @@ const sync = async ({
       await syncReportToSheet({
         smartsheetSheetId,
         smartsheetReportId,
+        ignoreUnrelatedColumns,
       });
     } else {
       console.error("Invalid sync direction.");

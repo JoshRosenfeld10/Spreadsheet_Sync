@@ -8,6 +8,7 @@ const syncGoogleSheetToSmartsheet = async ({
   googleSheetId,
   smartsheetSheetId,
   googleSheetName,
+  ignoreUnrelatedColumns,
 }) => {
   let defaultColumnCount = 0;
 
@@ -30,6 +31,13 @@ const syncGoogleSheetToSmartsheet = async ({
     if (title === "") defaultColumnCount++;
     return title === "" ? `Column${defaultColumnCount}` : title;
   }); // shift() pops first element
+
+  let smartsheetOriginalColumnIds = [];
+  if (ignoreUnrelatedColumns) {
+    smartsheetOriginalColumnIds = smartsheetColumns
+      .filter((col) => !col.primary && !googleSheetColumns.includes(col.title))
+      .map((col) => col.id);
+  }
 
   // Isolate Primary Column
   await isolatePrimaryColumn(smartsheetColumns, smartsheetSheetId);
@@ -71,24 +79,33 @@ const syncGoogleSheetToSmartsheet = async ({
   })();
 
   // Delete extra columns in Smartsheet
-  while (smartsheetColumns.length - 1 > googleSheetColumns.length) {
-    await smartsheet.deleteColumn({
-      sheetId: smartsheetSheetId,
-      columnId: smartsheetColumns[smartsheetColumns.length - 1].id,
-    });
-    smartsheetColumns.pop();
+  if (!ignoreUnrelatedColumns) {
+    while (smartsheetColumns.length - 1 > googleSheetColumns.length) {
+      await smartsheet.deleteColumn({
+        sheetId: smartsheetSheetId,
+        columnId: smartsheetColumns[smartsheetColumns.length - 1].id,
+      });
+      smartsheetColumns.pop();
+    }
   }
 
   const { rows: smartsheetRows, columns: updatedSmartsheetColumns } =
     await smartsheet.getSheet(smartsheetSheetId);
 
   const smartsheetColumnIds = updatedSmartsheetColumns
-    .filter((column) => !column.primary)
+    .filter(
+      (column) =>
+        !column.primary &&
+        !column.hidden &&
+        (ignoreUnrelatedColumns
+          ? !smartsheetOriginalColumnIds.includes(column.id)
+          : true)
+    )
     .map((column) => column.id);
   const smartsheetRowValues = smartsheetRows.map((row) =>
     row.cells
-      .filter((cell, idx) => idx !== 0)
-      .map((cell) => cell.displayValue || "")
+      .filter((cell) => smartsheetColumnIds.includes(cell.columnId))
+      .map((cell) => cell.displayValue || cell.value || "")
   );
 
   smartsheetRowValues.forEach((row) => {

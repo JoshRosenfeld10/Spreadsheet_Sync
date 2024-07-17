@@ -15,7 +15,12 @@ router.get("/", async (req, res) => {
     smartsheetSheetId,
     googleSheetName,
     smartsheetReportId,
+    ignoreUnrelatedColumns,
   } = req.query;
+
+  if (ignoreUnrelatedColumns) {
+    ignoreUnrelatedColumns = ignoreUnrelatedColumns === "true" ? true : false;
+  }
 
   const syncResponse = await sync({
     syncDirection,
@@ -23,6 +28,7 @@ router.get("/", async (req, res) => {
     smartsheetSheetId,
     googleSheetName,
     smartsheetReportId,
+    ignoreUnrelatedColumns,
   });
 
   if (syncResponse.send === "code") {
@@ -81,7 +87,7 @@ router.post("/", async (req, res) => {
 
     const syncFlag = cells[smartsheetUI.syncFlagIndex].displayValue;
 
-    if (syncFlag === "false") {
+    if (syncFlag !== "true") {
       res.sendStatus(200);
       return;
     }
@@ -101,7 +107,11 @@ router.post("/", async (req, res) => {
         cells[smartsheetUI.smartsheetSheetIdIndex].displayValue,
       googleSheetName = cells[smartsheetUI.googleSheetNameIndex].displayValue,
       smartsheetReportId =
-        cells[smartsheetUI.smartsheetReportIdIndex].displayValue;
+        cells[smartsheetUI.smartsheetReportIdIndex].displayValue,
+      ignoreUnrelatedColumns =
+        cells[smartsheetUI.ignoreUnrelatedColumnsIndex].value === true
+          ? true
+          : false;
 
     const syncResponse = await sync({
       syncDirection,
@@ -109,6 +119,7 @@ router.post("/", async (req, res) => {
       smartsheetSheetId,
       googleSheetName,
       smartsheetReportId,
+      ignoreUnrelatedColumns,
     });
 
     if (syncResponse.send === "code") {

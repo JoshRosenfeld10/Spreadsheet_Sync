@@ -3,7 +3,11 @@ const smartsheet = require("../modules/smartsheet"),
   shiftN = require("./shiftN"),
   arrayMove = require("../utils/arrayMove");
 
-const syncReportToSheet = async ({ smartsheetSheetId, smartsheetReportId }) => {
+const syncReportToSheet = async ({
+  smartsheetSheetId,
+  smartsheetReportId,
+  ignoreUnrelatedColumns,
+}) => {
   const { columns: reportColumns, rows: reportRows } =
     await smartsheet.getReport(smartsheetReportId);
 
@@ -26,6 +30,13 @@ const syncReportToSheet = async ({ smartsheetSheetId, smartsheetReportId }) => {
   const sheetColumnValues = sheetColumns
     .filter((col) => !sheetIgnoredColumnIds.includes(col.id))
     .map((col) => col.title);
+
+  let sheetOriginalColumnIds = [];
+  if (ignoreUnrelatedColumns) {
+    sheetOriginalColumnIds = sheetColumns
+      .filter((col) => !col.primary && !reportColumnValues.includes(col.title))
+      .map((col) => col.id);
+  }
 
   // Isolate Primary Column
   await isolatePrimaryColumn(sheetColumns, smartsheetSheetId);
@@ -79,24 +90,33 @@ const syncReportToSheet = async ({ smartsheetSheetId, smartsheetReportId }) => {
   })();
 
   // Delete extra columns in sheet
-  while (sheetColumns.length - 1 > reportColumnValues.length) {
-    await smartsheet.deleteColumn({
-      sheetId: smartsheetSheetId,
-      columnId: sheetColumns[sheetColumns.length - 1].id,
-    });
-    sheetColumns.pop();
+  if (!ignoreUnrelatedColumns) {
+    while (sheetColumns.length - 1 > reportColumnValues.length) {
+      await smartsheet.deleteColumn({
+        sheetId: smartsheetSheetId,
+        columnId: sheetColumns[sheetColumns.length - 1].id,
+      });
+      sheetColumns.pop();
+    }
   }
 
   const { rows: sheetRows, columns: updatedSheetColumns } =
     await smartsheet.getSheet(smartsheetSheetId);
 
   const sheetColumnIds = updatedSheetColumns
-    .filter((column) => !column.primary && !column.hidden)
+    .filter(
+      (column) =>
+        !column.primary &&
+        !column.hidden &&
+        (ignoreUnrelatedColumns
+          ? !sheetOriginalColumnIds.includes(column.id)
+          : true)
+    )
     .map((column) => column.id);
   const sheetRowValues = sheetRows.map((row) =>
     row.cells
-      .filter((cell, idx) => idx !== 0)
-      .map((cell) => cell.displayValue || "")
+      .filter((cell) => sheetColumnIds.includes(cell.columnId))
+      .map((cell) => cell.displayValue || cell.value || "")
   );
 
   const reportRowValues = reportRows.map((row) =>

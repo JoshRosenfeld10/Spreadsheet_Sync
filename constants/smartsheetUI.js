@@ -5,6 +5,7 @@ module.exports = {
   googleSheetNameIndex: 3,
   smartsheetReportIdIndex: 4,
   syncDirectionIndex: 5,
-  syncFlagIndex: 8,
+  ignoreUnrelatedColumnsIndex: 7,
+  syncFlagIndex: 9,
   syncFlagColumnId: 416513908756356,
 };
