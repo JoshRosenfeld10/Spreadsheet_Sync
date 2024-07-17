@@ -44,7 +44,7 @@ const syncReportToSheet = async ({
   // Compare Columns
   await (async () => {
     for (const [index, reportColumnValue] of reportColumnValues.entries()) {
-      const sheetColumnValue = sheetColumnValues[index];
+      const sheetColumnValue = sheetColumnValues[index] || "";
 
       if (!sheetColumnValue.includes(reportColumnValue)) {
         if (sheetColumnValues.slice(index).includes(reportColumnValue)) {
