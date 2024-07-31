@@ -8,4 +8,5 @@ module.exports = {
   ignoreUnrelatedColumnsIndex: 7,
   syncFlagIndex: 9,
   syncFlagColumnId: 416513908756356,
+  apiErrorMessageColumnId: 5250780866236292,
 };

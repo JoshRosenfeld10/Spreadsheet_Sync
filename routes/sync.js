@@ -122,10 +122,26 @@ router.post("/", async (req, res) => {
       ignoreUnrelatedColumns,
     });
 
+    await smartsheet.updateRows({
+      sheetId: smartsheetUI.sheetId,
+      rows: [
+        {
+          id: rowIdUI,
+          cells: cells
+            .filter((cell) => cell.value && !cell.formula)
+            .map((cell) =>
+              cell.columnId === smartsheetUI.syncFlagColumnId
+                ? {
+                    columnId: cell.columnId,
+                    value: "false",
+                  }
+                : cell
+            ),
+        },
+      ],
+    });
+
     if (syncResponse.send === "code") {
-      res.sendStatus(syncResponse.code);
-      return;
-    } else if (syncResponse.send === "string") {
       await smartsheet.updateRows({
         sheetId: smartsheetUI.sheetId,
         rows: [
@@ -134,16 +150,19 @@ router.post("/", async (req, res) => {
             cells: cells
               .filter((cell) => cell.value && !cell.formula)
               .map((cell) =>
-                cell.columnId === smartsheetUI.syncFlagColumnId
+                cell.columnId === smartsheetUI.apiErrorMessageColumnId
                   ? {
                       columnId: cell.columnId,
-                      value: "false",
+                      value: syncResponse.error,
                     }
                   : cell
               ),
           },
         ],
       });
+      res.sendStatus(syncResponse.code);
+      return;
+    } else if (syncResponse.send === "string") {
       res.set("Content-Type", "text/html");
       res.send(syncResponse.message);
       return;

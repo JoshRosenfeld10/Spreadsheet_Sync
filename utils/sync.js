@@ -19,6 +19,7 @@ const sync = async ({
     return {
       send: "code",
       code: 400,
+      error: "Missing fields.",
     };
   }
 
@@ -56,12 +57,14 @@ const sync = async ({
       return {
         send: "code",
         code: 400,
+        error: "Invalid sync direction.",
       };
     }
   } catch (error) {
     return {
       send: "code",
       code: 404,
+      error,
     };
   }
 
