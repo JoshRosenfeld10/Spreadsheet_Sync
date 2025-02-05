@@ -160,7 +160,7 @@ router.post("/", async (req, res) => {
           },
         ],
       });
-      res.sendStatus(syncResponse.code);
+      res.sendStatus(syncResponse.code || 400);
       return;
     } else if (syncResponse.send === "string") {
       res.set("Content-Type", "text/html");

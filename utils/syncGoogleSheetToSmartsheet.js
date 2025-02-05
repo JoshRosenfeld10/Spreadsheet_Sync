@@ -130,8 +130,9 @@ const syncGoogleSheetToSmartsheet = async ({
           newRows.push({
             toBottom: true,
             cells: googleSheetRow.map((cell, idx) => ({
-              value: cell,
+              objectValue: cell,
               columnId: smartsheetColumnIds[idx],
+              strict: false,
             })),
           });
         } else {
@@ -139,8 +140,9 @@ const syncGoogleSheetToSmartsheet = async ({
           updateRows.push({
             id: smartsheetRows[index].id,
             cells: googleSheetRow.map((cell, idx) => ({
-              value: cell,
+              objectValue: cell,
               columnId: smartsheetColumnIds[idx],
+              strict: false,
             })),
           });
         }
